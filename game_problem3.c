@@ -10,8 +10,22 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#define INT_SIZE 1000
+#define GEN_SIZE 1000
 #define BUFF_SIZE 100
+
+
+void unlink_semaphores(){
+	sem_unlink("/sema1");
+	sem_unlink("/sema2");
+	sem_unlink("/sema3");
+	sem_unlink("/sema4");	
+}
+
+void close_pipe(int fd[2]){
+	close(fd[0]);
+	close(fd[1]);
+}
+
 int make_decision(int num1,int num2){
 	int max_min_flag = rand()%2;
 	static int score_1=0;
@@ -42,23 +56,22 @@ int make_decision(int num1,int num2){
 void game(int n){
 	int len1,len2,i,val=-1,winner=0;
 	int temp;
+	long time_long;
+	time_t time_var;
 	char temp1[BUFF_SIZE];
 	int pipe1[2],pipe2[2];
 	char player1_data[BUFF_SIZE];
 	char player2_data[BUFF_SIZE];
+
 	pid_t player1_pid,player2_pid;
-	
 	sem_t *sem1,*sem2,*sem3,*sem4;
 	
+	unlink_semaphores();
 	
-	sem_unlink("/semaphore1");
-	sem_unlink("/semaphore2");
-	sem_unlink("/semaphore3");
-	sem_unlink("/semaphore4");	
-	sem1 = sem_open("/semaphore1", O_CREAT,  0644, 1);
-	sem2 = sem_open("/semaphore2", O_CREAT,  0644, 1);
-	sem3 = sem_open("/semaphore3", O_CREAT,  0644, 0);
-	sem4 = sem_open("/semaphore4", O_CREAT,  0644, 0);
+	sem1 = sem_open("/sema1", O_CREAT,  0644, 1);
+	sem2 = sem_open("/sema2", O_CREAT,  0644, 1);
+	sem3 = sem_open("/sema3", O_CREAT,  0644, 0);
+	sem4 = sem_open("/sema4", O_CREAT,  0644, 0);
 
 	pipe(pipe1);
 	pipe(pipe2);
@@ -69,10 +82,11 @@ void game(int n){
 		
 		
 	if(player1_pid == 0 ){
-		for(i=0;i<n;i++){		
-			sem_wait(sem1);		
-			temp = rand()%100;
-		
+		for(i=0;i<n;i++){
+
+			sem_wait(sem1);	
+
+			temp = rand()%GEN_SIZE;
 			printf("Player 1 selected : %d\n",temp);
 			sprintf(temp1,"%d",temp);
 			close(pipe1[0]);
@@ -82,10 +96,9 @@ void game(int n){
 		}
 	}else if(player2_pid == 0){
 		for(i=0;i<n;i++){
-			
 			sem_wait(sem2);
-			temp = rand()%101;
-		
+
+			temp = rand()%GEN_SIZE;
 			printf("Player 2 selected : %d\n",temp);		
 			sprintf(temp1,"%d",temp);
 			close(pipe2[0]);
@@ -95,9 +108,6 @@ void game(int n){
 			
 		}
 	}else{
-
-//		pid_t child_pid = waitpid(player1_pid,&stat,0);		
-//		pid_t child_pid1 = waitpid(player2_pid,&stat,0);
 		
 		for(i=0;i<n;i++){		
 		
@@ -121,32 +131,28 @@ void game(int n){
 			printf("Winner is Player 1\n");
 		}else{
 			printf("Winner is Player 2\n");
-		}}
-		
+		}}		
 		sem_post(sem1);	
 		sem_post(sem2);	
-
 
 		}				
 		
 	}
-	
-	
 
 	sem_close(sem1);
         sem_close(sem2);
         sem_close(sem3);
         sem_close(sem4);
-	sem_unlink("/semaphore1");
-	sem_unlink("/semaphore2");
-	sem_unlink("/semaphore3");
-	sem_unlink("/semaphore4");
+	unlink_semaphores();
+	close_pipe(pipe1);
+	close_pipe(pipe2);
 }
 int main(int argc,char *args[]){
-	static int n=1;
-	//n = (int)args[1];
-		game(10);
-	//	}
-
+	int n;
+	if(argc>=2){
+		n = atoi(args[1]);
+		game(n);
+	}else
+		printf("Please enter no of iterations in argument\n");
 	return 0;
 }
