@@ -80,12 +80,11 @@ void game(int n){
 	if(player1_pid>0)
 		player2_pid = fork();
 		
-		
+			
 	if(player1_pid == 0 ){
+		srand((unsigned) time(&time_var));
 		for(i=0;i<n;i++){
-
 			sem_wait(sem1);	
-
 			temp = rand()%GEN_SIZE;
 			printf("Player 1 selected : %d\n",temp);
 			sprintf(temp1,"%d",temp);
@@ -95,9 +94,10 @@ void game(int n){
 			sem_post(sem3);				
 		}
 	}else if(player2_pid == 0){
+		
 		for(i=0;i<n;i++){
 			sem_wait(sem2);
-
+		
 			temp = rand()%GEN_SIZE;
 			printf("Player 2 selected : %d\n",temp);		
 			sprintf(temp1,"%d",temp);
@@ -150,7 +150,9 @@ void game(int n){
 int main(int argc,char *args[]){
 	int n;
 	if(argc>=2){
+		printf("\n2 Player Game ");
 		n = atoi(args[1]);
+		printf("\nNo. of Iterations : %d\n\n",n);
 		game(n);
 	}else
 		printf("Please enter no of iterations in argument\n");
